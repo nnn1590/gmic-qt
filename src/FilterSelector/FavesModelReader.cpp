@@ -56,13 +56,13 @@ FavesModel::Fave FavesModelReader::jsonObjectToFave(const QJsonObject & object)
   fave.setPreviewCommand(object.value("preview").toString());
   QStringList defaultParameters;
   QJsonArray array = object.value("defaultParameters").toArray();
-  for (const QJsonValueRef & value : array) {
+  for (const QJsonValueRef value : array) {
     defaultParameters.push_back(value.toString());
   }
   fave.setDefaultValues(defaultParameters);
   QList<int> defaultVisibilities;
   array = object.value("defaultVisibilities").toArray();
-  for (const QJsonValueRef & value : array) {
+  for (const QJsonValueRef value : array) {
     defaultVisibilities.push_back(value.toInt());
   }
   fave.setDefaultVisibilities(defaultVisibilities);
@@ -120,7 +120,7 @@ void FavesModelReader::loadFaves()
       document = QJsonDocument::fromJson(jsonFile.readAll(), &parseError);
       if (parseError.error == QJsonParseError::NoError) {
         QJsonArray array = document.array();
-        for (const QJsonValueRef & value : array) {
+        for (const QJsonValueRef value : array) {
           _model.addFave(jsonObjectToFave(value.toObject()));
         }
       } else {
@@ -148,7 +148,7 @@ void FavesModelReader::loadFaves()
           for (QString & str : list) {
             str.replace(QChar(gmic_lbrace), QString("{"));
             str.replace(QChar(gmic_rbrace), QString("}"));
-	      // (29 == gmic_newline) until gmic version 2.7.1
+            // (29 == gmic_newline) until gmic version 2.7.1
             str.replace(QChar(29), QString("\n"));
           }
           if (list.size() >= 4) {

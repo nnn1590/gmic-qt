@@ -93,7 +93,7 @@ void FiltersView::enableModel()
     QString title = QString("_%1_").arg(headerItem->text());
     QFont font;
     QFontMetrics fm(font);
-#if QT_VERSION_GTE(5,11)
+#if QT_VERSION_GTE(5, 11)
     int w = fm.horizontalAdvance(title);
 #else
     int w = fm.width(title);
@@ -235,9 +235,9 @@ FilterTreeItem * FiltersView::selectedItem() const
   return filterTreeItemFromIndex(index);
 }
 
-FilterTreeItem * FiltersView::filterTreeItemFromIndex(QModelIndex index) const
+QStandardItem * FiltersView::filterTreeStandardItemFromIndex(QModelIndex index) const
 {
-  // Get filter item even if it is the checkbox which is actually selected
+  // Get standard item even if it is the checkbox which is actually selected
   if (!index.isValid()) {
     return nullptr;
   }
@@ -251,11 +251,26 @@ FilterTreeItem * FiltersView::filterTreeItemFromIndex(QModelIndex index) const
     }
     QStandardItem * leftItem = parentFolder->child(row, 0);
     if (leftItem) {
-      auto item = dynamic_cast<FilterTreeItem *>(leftItem);
-      if (item) {
-        return item;
-      }
+      return leftItem;
     }
+  }
+  return nullptr;
+}
+
+FilterTreeItem * FiltersView::filterTreeItemFromIndex(QModelIndex index) const
+{
+  QStandardItem * item = filterTreeStandardItemFromIndex(index);
+  if (item) {
+    return dynamic_cast<FilterTreeItem *>(item);
+  }
+  return nullptr;
+}
+
+FilterTreeFolder * FiltersView::filterTreeFolderFromIndex(QModelIndex index) const
+{
+  QStandardItem * item = filterTreeStandardItemFromIndex(index);
+  if (item) {
+    return dynamic_cast<FilterTreeFolder *>(item);
   }
   return nullptr;
 }
@@ -398,14 +413,18 @@ void FiltersView::onCustomContextMenu(const QPoint & point)
     return;
   }
   FilterTreeItem * item = filterTreeItemFromIndex(index);
-  if (!item) {
-    return;
+  if (item) {
+    onItemClicked(index);
+    if (item->isFave()) {
+      _faveContextMenu->exec(ui->treeView->mapToGlobal(point));
+    } else {
+      _filterContextMenu->exec(ui->treeView->mapToGlobal(point));
+    }
   }
-  onItemClicked(index);
-  if (item->isFave()) {
-    _faveContextMenu->exec(ui->treeView->mapToGlobal(point));
-  } else {
-    _filterContextMenu->exec(ui->treeView->mapToGlobal(point));
+  FilterTreeFolder * folder = filterTreeFolderFromIndex(index);
+  if (folder) {
+    if (folder->isFaveFolder()) {
+    }
   }
 }
 

@@ -104,7 +104,9 @@ private slots:
   void onContextMenuAddFave();
 
 private:
+  QStandardItem * filterTreeStandardItemFromIndex(QModelIndex index) const;
   FilterTreeItem * filterTreeItemFromIndex(QModelIndex index) const;
+  FilterTreeFolder * filterTreeFolderFromIndex(QModelIndex index) const;
   void expandFolders(const QList<QString> & folderPaths, QStandardItem * folder);
   void uncheckFullyUncheckedFolders(QStandardItem * folder);
   void preserveExpandedFolders(QStandardItem * folder, QList<QString> & list);

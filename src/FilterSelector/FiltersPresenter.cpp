@@ -311,6 +311,8 @@ void FiltersPresenter::editSelectedFaveName()
   _filtersView->editSelectedFaveName();
 }
 
+// TODO : On fave moved -> Move saved parameters too
+
 void FiltersPresenter::onFaveRenamed(const QString & hash, const QString & name)
 {
   Q_ASSERT_X(_favesModel.contains(hash), "onFaveRenamed()", "Hash not found");
