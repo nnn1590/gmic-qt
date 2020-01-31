@@ -77,6 +77,12 @@ QJsonObject FavesModelWriter::faveToJsonObject(const FavesModel::Fave & fave)
     params.push_back(str);
   }
   object["defaultParameters"] = params;
+  QJsonArray path;
+  for (const QString & str : fave.path()) {
+    path.push_back(str);
+  }
+  object["path"] = path;
+
   QJsonArray visibilities;
   for (const int & visibility : fave.defaultVisibilityStates()) {
     visibilities.push_back(visibility);

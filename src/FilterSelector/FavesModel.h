@@ -39,6 +39,7 @@ public:
     Fave & setPreviewCommand(const QString & command);
     Fave & setOriginalHash(const QString & hash);
     Fave & setDefaultValues(const QList<QString> & defaultValues);
+    Fave & setPath(const QList<QString> & path);
     Fave & setDefaultVisibilities(const QList<int> & defaultVisibilityStates);
     Fave & build();
 
@@ -50,6 +51,7 @@ public:
     const QString & previewCommand() const;
     const QString & hash() const;
     const QList<QString> & defaultValues() const;
+    const QList<QString> & path() const;
     const QList<int> & defaultVisibilityStates() const;
     QString toString() const;
     bool matchKeywords(const QList<QString> & keywords) const;
@@ -62,6 +64,7 @@ public:
     QString _previewCommand;
     QString _hash;
     QString _originalHash;
+    QList<QString> _path;
     QList<QString> _defaultValues;
     QList<int> _defaultVisibilityStates;
   };
@@ -80,8 +83,8 @@ public:
     QMap<QString, Fave>::const_iterator _mapIterator;
   };
 
-  FavesModel();
-  ~FavesModel();
+  FavesModel() = default;
+  ~FavesModel() = default;
   inline const_iterator begin() const;
   inline const_iterator end() const;
   inline const_iterator cbegin() const;
@@ -94,8 +97,9 @@ public:
   size_t faveCount() const;
   const_iterator findFaveFromHash(const QString &) const;
   const Fave & getFaveFromHash(const QString & hash) const;
-  QString uniqueName(const QString & name, const QString & faveHashToIgnore);
+  QString uniqueName(const QString & name, const QList<QString> & path, const QString & faveHashToIgnore);
   static const size_t NoIndex;
+  QList<QString> paths() const;
 
 private:
   QMap<QString, Fave> _faves;

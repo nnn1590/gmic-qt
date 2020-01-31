@@ -231,6 +231,7 @@ DEPENDPATH += $$PWD/src \
 HEADERS +=  \
   src/ClickableLabel.h \
   src/Common.h \
+  src/FilterSelector/FiltersView/FilterTreeNullItem.h \
   src/OverrideCursor.h \
   src/DialogSettings.h \
   src/FilterParameters/AbstractParameter.h \
@@ -261,6 +262,7 @@ HEADERS +=  \
   src/CroppedActiveLayerProxy.h \
   src/FilterSyncRunner.h \
   src/FilterThread.h \
+  src/Widgets/FaveSubfolderSelector.h \
   src/gmic_qt.h \
   src/Globals.h \
   src/GmicStdlib.h \
@@ -305,6 +307,7 @@ HEADERS += $$GMIC_PATH/gmic_stdlib.h
 SOURCES += \
   src/ClickableLabel.cpp \
   src/Common.cpp \
+  src/FilterSelector/FiltersView/FilterTreeNullItem.cpp \
   src/OverrideCursor.cpp \
   src/DialogSettings.cpp \
   src/FilterParameters/AbstractParameter.cpp \
@@ -335,6 +338,7 @@ SOURCES += \
   src/CroppedActiveLayerProxy.cpp \
   src/FilterSyncRunner.cpp \
   src/FilterThread.cpp \
+  src/Widgets/FaveSubfolderSelector.cpp \
   src/gmic_qt.cpp \
   src/Globals.cpp \
   src/GmicStdlib.cpp \
@@ -381,6 +385,7 @@ equals(GMIC_DYNAMIC_LINKING, "off" ) {
 
 # ALL_FORMS
 FORMS +=  ui/inoutpanel.ui \
+          ui/favesubfolderselector.ui \
           ui/multilinetextparameterwidget.ui \
           ui/progressinfowindow.ui \
           ui/dialogsettings.ui \

@@ -52,8 +52,9 @@ public:
   void enableModel();
   void disableModel();
   void createFolder(const QList<QString> & path);
+  FilterTreeFolder * createFaveSubfolder(const QList<QString> & path);
   void addFilter(const QString & text, const QString & hash, const QList<QString> & path, bool warning);
-  void addFave(const QString & text, const QString & hash);
+  void addFave(const QString & text, const QString & hash, const QList<QString> & path);
   void selectFave(const QString & hash);
   void selectActualFilter(const QString & hash, const QList<QString> & path);
   void removeFave(const QString & hash);
@@ -86,6 +87,7 @@ signals:
   void faveRenamed(QString hash, QString newName);
   void faveRemovalRequested(QString hash);
   void faveAdditionRequested(QString hash);
+  void faveSubfolderCreationRequested(QString path);
 
 public slots:
   void editSelectedFaveName();
@@ -102,6 +104,7 @@ private slots:
   void onContextMenuRemoveFave();
   void onContextMenuRenameFave();
   void onContextMenuAddFave();
+  void onContextMenuCreateFaveSubfolder();
 
 private:
   QStandardItem * filterTreeStandardItemFromIndex(QModelIndex index) const;
@@ -114,8 +117,11 @@ private:
   void removeFaveFolder();
   void addStandardItemWithCheckbox(QStandardItem * folder, FilterTreeAbstractItem * item);
   QStandardItem * getFolderFromPath(const QList<QString> & path);
+  FilterTreeFolder * getFaveSubfolderFromPath(const QList<QString> & path);
   QStandardItem * createFolder(QStandardItem * parent, QList<QString> path);
-  FilterTreeItem * findFave(const QString & hash);
+  FilterTreeItem * findFave(const QString & hash) const;
+  FilterTreeItem * findFave(const QString & hash, FilterTreeFolder * folder) const;
+  void updateNullItemInFaveSubfolder(FilterTreeFolder *);
   static QStandardItem * getFolderFromPath(QStandardItem * parent, QList<QString> path);
   static void saveFiltersVisibility(QStandardItem * item);
   Ui::FiltersView * ui;
@@ -129,6 +135,8 @@ private:
   static const QString FilterTreePathSeparator;
   bool _isInSelectionMode;
   QMenu * _faveContextMenu;
+  QMenu * _faveSubFolderContextMenu;
+  QAction * _createFaveSubFolderAction;
   QMenu * _filterContextMenu;
 };
 

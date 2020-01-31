@@ -34,6 +34,7 @@ public:
   void setFaveFolderFlag(bool);
   bool isFullyUnchecked();
   bool isFaveFolder() const;
+  bool isFaveSubFolder() const;
   bool operator<(const QStandardItem & other) const override;
   void applyVisibilityStatusToFolderContents();
   void setItemsVisibility(bool visible);

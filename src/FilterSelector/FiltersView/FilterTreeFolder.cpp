@@ -25,6 +25,7 @@
 #include "FilterTreeFolder.h"
 #include <QDebug>
 #include "FilterSelector/FiltersView/FilterTreeItem.h"
+#include "FilterSelector/FiltersView/FilterTreeNullItem.h"
 #include "HtmlTranslator.h"
 
 FilterTreeFolder::FilterTreeFolder(const QString & text) : FilterTreeAbstractItem(text)
@@ -77,13 +78,31 @@ bool FilterTreeFolder::isFaveFolder() const
   return _isFaveFolder;
 }
 
+bool FilterTreeFolder::isFaveSubFolder() const
+{
+  const QStandardItem * parentItem = this;
+  while ((parentItem = parentItem->parent())) {
+    auto folder = dynamic_cast<const FilterTreeFolder *>(parentItem);
+    if (folder && folder->isFaveFolder()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool FilterTreeFolder::operator<(const QStandardItem & other) const
 {
   auto otherFolder = dynamic_cast<const FilterTreeFolder *>(&other);
   auto otherItem = dynamic_cast<const FilterTreeItem *>(&other);
-  Q_ASSERT_X(otherFolder || otherItem, "FilterTreeItem::operator<", "Wrong item types");
+  auto otherNull = dynamic_cast<const FilterTreeNullItem *>(&other);
+  Q_ASSERT_X(otherFolder || otherItem || otherNull, "FilterTreeItem::operator<", "Wrong item types");
   bool otherIsWarning = (otherFolder && otherFolder->isWarning()) || (otherItem && otherItem->isWarning());
   bool otherIsFaveFolder = otherFolder && otherFolder->isFaveFolder();
+
+  // Null item always first
+  if (otherNull) {
+    return false;
+  }
 
   // Warnings first
   if (isWarning() && !otherIsWarning) {

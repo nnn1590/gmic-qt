@@ -35,6 +35,7 @@
 #include "Logger.h"
 #include "ParametersCache.h"
 #include "Utils.h"
+#include "Widgets/FaveSubfolderSelector.h" // TODO: Remove
 #include "Widgets/InOutPanel.h"
 
 FiltersPresenter::FiltersPresenter(QObject * parent) : QObject(parent)
@@ -57,6 +58,7 @@ void FiltersPresenter::setFiltersView(FiltersView * filtersView)
   connect(_filtersView, SIGNAL(faveRenamed(QString, QString)), this, SLOT(onFaveRenamed(QString, QString)));
   connect(_filtersView, SIGNAL(faveRemovalRequested(QString)), this, SLOT(removeFave(QString)));
   connect(_filtersView, SIGNAL(faveAdditionRequested(QString)), this, SIGNAL(faveAdditionRequested(QString)));
+  connect(_filtersView, SIGNAL(faveSubfolderCreationRequested(QString)), this, SLOT(onFaveSubfolderCreationRequest(QString)));
 }
 
 void FiltersPresenter::rebuildFilterView()
@@ -76,7 +78,7 @@ void FiltersPresenter::rebuildFilterViewWithSelection(const QList<QString> & key
   FavesModel::const_iterator itFave = _favesModel.cbegin();
   while (itFave != _favesModel.cend()) {
     if (itFave->matchKeywords(keywords)) {
-      _filtersView->addFave(itFave->name(), itFave->hash());
+      _filtersView->addFave(itFave->name(), itFave->hash(), itFave->path());
     }
     ++itFave;
   }
@@ -127,8 +129,11 @@ void FiltersPresenter::restoreFaveHashLinksAfterCaseChange()
   FavesModel formerFaveModel = _favesModel;
   FavesModel::const_iterator itFormerFave = formerFaveModel.cbegin();
   bool someFavesHaveBeenRelinked = false;
-  while (itFormerFave != formerFaveModel.cend()) {
+  for (; itFormerFave != formerFaveModel.cend(); ++itFormerFave) {
     const FavesModel::Fave & fave = *itFormerFave;
+    if (fave.name().isEmpty()) {
+      continue;
+    }
     if (!_filtersModel.contains(fave.originalHash())) {
       FiltersModel::const_iterator itFilter = _filtersModel.cbegin();
       while ((itFilter != _filtersModel.cend()) && (itFilter->hash236() != fave.originalHash())) {
@@ -148,7 +153,6 @@ void FiltersPresenter::restoreFaveHashLinksAfterCaseChange()
         Logger::log(message);
       }
     }
-    ++itFormerFave;
   }
   if (someFavesHaveBeenRelinked) {
     saveFaves();
@@ -172,13 +176,20 @@ void FiltersPresenter::addSelectedFilterAsNewFave(const QList<QString> & default
   if (_currentFilter.hash.isEmpty() || (!_filtersModel.contains(_currentFilter.hash) && !_favesModel.contains(_currentFilter.hash))) {
     return;
   }
+  QString path;
+  if (!selectFaveFolder(path)) {
+    return;
+  }
   FavesModel::Fave fave;
   fave.setDefaultValues(defaultValues);
+  fave.setPath(path.split(FAVE_PATH_SEPATATOR, QString::SkipEmptyParts));
   fave.setDefaultVisibilities(visibilityStates);
+
+  TSHOW(fave.path());
 
   if (_filtersModel.contains(_currentFilter.hash)) {
     const FiltersModel::Filter & filter = _filtersModel.getFilterFromHash(_currentFilter.hash);
-    fave.setName(_favesModel.uniqueName(filter.name(), QString()));
+    fave.setName(_favesModel.uniqueName(filter.name(), fave.path(), QString()));
     fave.setCommand(filter.command());
     fave.setPreviewCommand(filter.previewCommand());
     fave.setOriginalHash(filter.hash());
@@ -187,7 +198,7 @@ void FiltersPresenter::addSelectedFilterAsNewFave(const QList<QString> & default
     FavesModel::const_iterator faveIterator = _favesModel.findFaveFromHash(_currentFilter.hash);
     if (faveIterator != _favesModel.cend()) {
       const FavesModel::Fave & originalFave = *faveIterator;
-      fave.setName(_favesModel.uniqueName(originalFave.name(), QString()));
+      fave.setName(_favesModel.uniqueName(originalFave.name(), fave.path(), QString()));
       fave.setCommand(originalFave.command());
       fave.setPreviewCommand(originalFave.previewCommand());
       fave.setOriginalHash(originalFave.originalHash());
@@ -201,11 +212,31 @@ void FiltersPresenter::addSelectedFilterAsNewFave(const QList<QString> & default
   ParametersCache::setValues(fave.hash(), defaultValues);
   ParametersCache::setVisibilityStates(fave.hash(), visibilityStates);
   ParametersCache::setInputOutputState(fave.hash(), inOutState);
-  _filtersView->addFave(fave.name(), fave.hash());
+  _filtersView->addFave(fave.name(), fave.hash(), fave.path()); // TODO: Ask user for a fave folder
   _filtersView->sortFaves();
   _filtersView->selectFave(fave.hash());
   onFilterChanged(fave.hash());
   saveFaves();
+}
+
+bool FiltersPresenter::selectFaveFolder(QString & path)
+{
+  FaveSubfolderSelector selector;
+  selector.setFavesModel(_favesModel);
+  int result = selector.exec();
+  if (result == QDialog::Accepted) {
+    TSHOW(selector.createdPaths());
+    TSHOW(selector.selectedPath());
+    QStringList created = selector.createdPaths();
+    for (const QString & path : created) {
+      onFaveSubfolderCreationRequest(path);
+    }
+    path = selector.selectedPath();
+    return true;
+  } else {
+    TSHOW("REJECTED");
+    return false;
+  }
 }
 
 void FiltersPresenter::applySearchCriterion(const QString & text)
@@ -322,12 +353,12 @@ void FiltersPresenter::onFaveRenamed(const QString & hash, const QString & name)
   if (newName.isEmpty()) {
     if (_filtersModel.contains(fave.originalHash())) {
       const FiltersModel::Filter & originalFilter = _filtersModel.getFilterFromHash(fave.originalHash());
-      newName = _favesModel.uniqueName(originalFilter.name(), QString());
+      newName = _favesModel.uniqueName(originalFilter.name(), fave.path(), QString());
     } else {
-      newName = _favesModel.uniqueName("Unknown filter", QString());
+      newName = _favesModel.uniqueName("Unknown filter", fave.path(), QString());
     }
   } else {
-    newName = _favesModel.uniqueName(newName, QString());
+    newName = _favesModel.uniqueName(newName, fave.path(), QString());
   }
 
   fave.setName(newName);
@@ -355,6 +386,20 @@ void FiltersPresenter::toggleSelectionMode(bool on)
   } else {
     _filtersView->disableSelectionMode();
   }
+}
+
+void FiltersPresenter::onFaveSubfolderCreationRequest(QString path)
+{
+  TSHOW(path);
+  QList<QString> pathList = path.split(FAVE_PATH_SEPATATOR, QString::SkipEmptyParts);
+  _filtersView->createFaveSubfolder(pathList);
+
+  FavesModel::Fave fave;
+  fave.setPath(pathList);
+  fave.build();
+  _favesModel.addFave(fave);
+  // TODO : Edit new folder item in view
+  // Resolve unique name
 }
 
 void FiltersPresenter::onFilterChanged(const QString & hash)

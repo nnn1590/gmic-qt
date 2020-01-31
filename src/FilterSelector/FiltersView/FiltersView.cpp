@@ -27,6 +27,7 @@
 #include <QEvent>
 #include <QKeyEvent>
 #include <QLineEdit>
+#include <QList>
 #include <QMessageBox>
 #include <QSettings>
 #include <QStandardItem>
@@ -35,11 +36,15 @@
 #include "FilterSelector/FiltersView/FilterTreeFolder.h"
 #include "FilterSelector/FiltersView/FilterTreeItem.h"
 #include "FilterSelector/FiltersView/FilterTreeItemDelegate.h"
+#include "FilterSelector/FiltersView/FilterTreeNullItem.h"
 #include "FilterSelector/FiltersVisibilityMap.h"
 #include "Globals.h"
+#include "Utils.h"
 #include "ui_filtersview.h"
 
 const QString FiltersView::FilterTreePathSeparator("\t");
+
+// TODO : Handler subfolder everywhere
 
 FiltersView::FiltersView(QWidget * parent) : QWidget(parent), ui(new Ui::FiltersView), _isInSelectionMode(false)
 {
@@ -59,6 +64,7 @@ FiltersView::FiltersView(QWidget * parent) : QWidget(parent), ui(new Ui::Filters
 
   ui->treeView->setContextMenuPolicy(Qt::CustomContextMenu);
   connect(ui->treeView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(onCustomContextMenu(QPoint)));
+
   _faveContextMenu = new QMenu(this);
   QAction * action;
   action = _faveContextMenu->addAction(tr("Rename fave"));
@@ -68,11 +74,17 @@ FiltersView::FiltersView(QWidget * parent) : QWidget(parent), ui(new Ui::Filters
   action = _faveContextMenu->addAction(tr("Clone fave"));
   connect(action, SIGNAL(triggered(bool)), this, SLOT(onContextMenuAddFave()));
 
+  _faveSubFolderContextMenu = new QMenu(this);
+  _createFaveSubFolderAction = _faveSubFolderContextMenu->addAction(tr("Create subfolder"));
+  connect(_createFaveSubFolderAction, SIGNAL(triggered(bool)), this, SLOT(onContextMenuCreateFaveSubfolder()));
+
   _filterContextMenu = new QMenu(this);
   action = _filterContextMenu->addAction(tr("Add fave"));
   connect(action, SIGNAL(triggered(bool)), this, SLOT(onContextMenuAddFave()));
 
   ui->treeView->installEventFilter(this);
+
+  // TODO : Allow rename folder name in this view
 }
 
 FiltersView::~FiltersView()
@@ -113,6 +125,20 @@ void FiltersView::createFolder(const QList<QString> & path)
   createFolder(_model.invisibleRootItem(), path);
 }
 
+FilterTreeFolder * FiltersView::createFaveSubfolder(const QList<QString> & path)
+{
+  if (!_faveFolder) {
+    createFaveFolder();
+  }
+  QStandardItem * item = createFolder(_faveFolder, path);
+  auto folder = dynamic_cast<FilterTreeFolder *>(item);
+  if (folder) {
+    updateNullItemInFaveSubfolder(folder);
+    sortFaves();
+  }
+  return folder;
+}
+
 void FiltersView::addFilter(const QString & text, const QString & hash, const QList<QString> & path, bool warning)
 {
   const bool filterIsVisible = FiltersVisibilityMap::filterIsVisible(hash);
@@ -134,7 +160,7 @@ void FiltersView::addFilter(const QString & text, const QString & hash, const QL
   }
 }
 
-void FiltersView::addFave(const QString & text, const QString & hash)
+void FiltersView::addFave(const QString & text, const QString & hash, const QList<QString> & path)
 {
   const bool faveIsVisible = FiltersVisibilityMap::filterIsVisible(hash);
   if (!_isInSelectionMode && !faveIsVisible) {
@@ -143,16 +169,31 @@ void FiltersView::addFave(const QString & text, const QString & hash)
   if (!_faveFolder) {
     createFaveFolder();
   }
+  FilterTreeFolder * folder = getFaveSubfolderFromPath(path);
+  if (!folder) {
+    folder = createFaveSubfolder(path);
+    auto parentFolder = dynamic_cast<FilterTreeFolder *>(folder->parent());
+    updateNullItemInFaveSubfolder(parentFolder);
+  }
+
+  // Empty text is for dummy Fave to keep trace of empty folders
+  // TODO : Handle selection mode and visibility
+  if (text.isEmpty()) {
+    updateNullItemInFaveSubfolder(folder);
+    return;
+  }
+
   auto item = new FilterTreeItem(text);
   item->setHash(hash);
   item->setWarningFlag(false);
   item->setFaveFlag(true);
   if (_isInSelectionMode) {
-    addStandardItemWithCheckbox(_faveFolder, item);
+    addStandardItemWithCheckbox(folder, item);
     item->setVisibility(faveIsVisible);
   } else {
-    _faveFolder->appendRow(item);
+    folder->appendRow(item);
   }
+  updateNullItemInFaveSubfolder(folder);
 }
 
 void FiltersView::selectFave(const QString & hash)
@@ -161,6 +202,7 @@ void FiltersView::selectFave(const QString & hash)
   if (ui->treeView->model() == &_model) {
     FilterTreeItem * fave = findFave(hash);
     if (fave) {
+      // TODO : NOW Expand folders
       ui->treeView->setCurrentIndex(fave->index());
       ui->treeView->scrollTo(fave->index(), QAbstractItemView::PositionAtCenter);
     }
@@ -186,7 +228,9 @@ void FiltersView::removeFave(const QString & hash)
 {
   FilterTreeItem * fave = findFave(hash);
   if (fave) {
+    FilterTreeFolder * parentFolder = dynamic_cast<FilterTreeFolder *>(fave->parent());
     _model.removeRow(fave->row(), fave->index().parent());
+    updateNullItemInFaveSubfolder(parentFolder);
     if (_faveFolder->rowCount() == 0) {
       removeFaveFolder();
     }
@@ -424,6 +468,11 @@ void FiltersView::onCustomContextMenu(const QPoint & point)
   FilterTreeFolder * folder = filterTreeFolderFromIndex(index);
   if (folder) {
     if (folder->isFaveFolder()) {
+      _createFaveSubFolderAction->setData(_faveFolder->index());
+      _faveSubFolderContextMenu->exec(ui->treeView->mapToGlobal(point));
+    } else if (folder->isFaveSubFolder()) {
+      _createFaveSubFolderAction->setData(folder->index());
+      _faveSubFolderContextMenu->exec(ui->treeView->mapToGlobal(point));
     }
   }
 }
@@ -505,6 +554,35 @@ void FiltersView::onContextMenuAddFave()
   emit faveAdditionRequested(selectedFilterHash());
 }
 
+void FiltersView::onContextMenuCreateFaveSubfolder()
+{
+  QModelIndex index = _createFaveSubFolderAction->data().toModelIndex();
+  QStandardItem * item = filterTreeStandardItemFromIndex(index);
+  FilterTreeFolder * folder = item ? dynamic_cast<FilterTreeFolder *>(item) : nullptr;
+  QStringList existingNames;
+  for (int i = 0; i < folder->rowCount(); ++i) {
+    if (dynamic_cast<FilterTreeFolder *>(folder->child(i))) {
+      existingNames.push_back(folder->child(i)->text());
+    }
+  }
+  QString name = FAVE_NEW_FOLDER_TEXT;
+  GmicQt::makeUniqueName(name, existingNames);
+  QList<QString> path;
+  if (folder == _faveFolder) {
+    TSHOW("Create Root Fave Folder subfolder");
+    path << name;
+  } else if (folder && folder->isFaveSubFolder()) {
+    TSHOW("Create Fave Folder subfolder");
+    path = folder->path();
+    path.pop_front();
+    path.append(name);
+  }
+  TSHOW(path);
+  if (!path.isEmpty()) {
+    emit faveSubfolderCreationRequested(path.join(FAVE_PATH_SEPATATOR));
+  }
+}
+
 void FiltersView::uncheckFullyUncheckedFolders(QStandardItem * folder)
 {
   int rows = folder->rowCount();
@@ -521,6 +599,9 @@ void FiltersView::uncheckFullyUncheckedFolders(QStandardItem * folder)
 
 void FiltersView::preserveExpandedFolders(QStandardItem * folder, QList<QString> & list)
 {
+  if (!folder) {
+    return;
+  }
   int rows = folder->rowCount();
   for (int row = 0; row < rows; ++row) {
     auto subFolder = dynamic_cast<FilterTreeFolder *>(folder->child(row));
@@ -573,6 +654,17 @@ QStandardItem * FiltersView::getFolderFromPath(const QList<QString> & path)
   _cachedFolder = getFolderFromPath(_model.invisibleRootItem(), path);
   _cachedFolderPath = path;
   return _cachedFolder;
+}
+
+FilterTreeFolder * FiltersView::getFaveSubfolderFromPath(const QList<QString> & path)
+{
+  if (!_faveFolder) {
+    return nullptr;
+  }
+  if (path.isEmpty()) {
+    return _faveFolder;
+  }
+  return dynamic_cast<FilterTreeFolder *>(getFolderFromPath(_faveFolder, path));
 }
 
 QStandardItem * FiltersView::createFolder(QStandardItem * parent, QList<QString> path)
@@ -631,14 +723,44 @@ void FiltersView::saveFiltersVisibility(QStandardItem * item)
   }
 }
 
-FilterTreeItem * FiltersView::findFave(const QString & hash)
+FilterTreeItem * FiltersView::findFave(const QString & hash, FilterTreeFolder * folder) const
 {
-  const int count = _faveFolder ? _faveFolder->rowCount() : 0;
-  for (int faveIndex = 0; faveIndex < count; ++faveIndex) {
-    auto item = dynamic_cast<FilterTreeItem *>(_faveFolder->child(faveIndex));
+  if (!folder) {
+    return nullptr;
+  }
+  int rows = folder->rowCount();
+  for (int row = 0; row < rows; ++row) {
+    auto item = dynamic_cast<FilterTreeItem *>(folder->child(row));
     if (item && (item->hash() == hash)) {
       return item;
     }
+    auto subfolder = dynamic_cast<FilterTreeFolder *>(folder->child(row));
+    if (subfolder) {
+      FilterTreeItem * item = findFave(hash, subfolder);
+      if (item) {
+        return item;
+      }
+    }
   }
   return nullptr;
+}
+
+FilterTreeItem * FiltersView::findFave(const QString & hash) const
+{
+  return findFave(hash, _faveFolder);
+}
+
+void FiltersView::updateNullItemInFaveSubfolder(FilterTreeFolder * folder)
+{
+  if (!folder) {
+    return;
+  }
+  if (folder->rowCount() == 0) {
+    folder->appendRow(new FilterTreeNullItem());
+    return;
+  }
+  if ((folder->rowCount() > 1) && dynamic_cast<FilterTreeNullItem *>(folder->child(0))) {
+    folder->removeRow(0);
+    return;
+  }
 }

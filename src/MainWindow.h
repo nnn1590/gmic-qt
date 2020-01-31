@@ -64,7 +64,7 @@ public:
   };
 
   explicit MainWindow(QWidget * parent = nullptr);
-  ~MainWindow();
+  ~MainWindow() override;
   void updateFiltersFromSources(int ageLimit, bool useNetwork);
 
   void setDarkTheme();

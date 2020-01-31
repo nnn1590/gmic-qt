@@ -25,6 +25,7 @@
 #include "FilterTreeItem.h"
 #include <QDebug>
 #include "FilterSelector/FiltersView/FilterTreeFolder.h"
+#include "FilterSelector/FiltersView/FilterTreeNullItem.h"
 #include "HtmlTranslator.h"
 
 FilterTreeItem::FilterTreeItem(const QString & text) : FilterTreeAbstractItem(text)
@@ -69,9 +70,15 @@ bool FilterTreeItem::operator<(const QStandardItem & other) const
 {
   auto otherFolder = dynamic_cast<const FilterTreeFolder *>(&other);
   auto otherItem = dynamic_cast<const FilterTreeItem *>(&other);
-  Q_ASSERT_X(otherFolder || otherItem, "FilterTreeItem::operator<", "Wrong item types");
+  auto otherNull = dynamic_cast<const FilterTreeNullItem *>(&other);
+  Q_ASSERT_X(otherFolder || otherItem || otherNull, "FilterTreeItem::operator<", "Wrong item types");
   bool otherIsWarning = (otherFolder && otherFolder->isWarning()) || (otherItem && otherItem->isWarning());
   bool otherIsFaveFolder = otherFolder && otherFolder->isFaveFolder();
+
+  // Null item always first
+  if (otherNull) {
+    return false;
+  }
 
   // Warnings first
   if (_isWarning && !otherIsWarning) {

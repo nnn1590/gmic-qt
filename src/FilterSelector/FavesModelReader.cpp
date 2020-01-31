@@ -60,6 +60,14 @@ FavesModel::Fave FavesModelReader::jsonObjectToFave(const QJsonObject & object)
     defaultParameters.push_back(value.toString());
   }
   fave.setDefaultValues(defaultParameters);
+
+  QList<QString> path;
+  array = object.value("path").toArray();
+  for (const QJsonValueRef value : array) {
+    path.push_back(value.toString());
+  }
+  fave.setPath(path);
+
   QList<int> defaultVisibilities;
   array = object.value("defaultVisibilities").toArray();
   for (const QJsonValueRef value : array) {

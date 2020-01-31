@@ -31,10 +31,9 @@
 #include "DialogSettings.h"
 #include "FilterSelector/FiltersView/FilterTreeAbstractItem.h"
 #include "FilterSelector/FiltersView/FilterTreeItem.h"
+#include "FilterSelector/FiltersView/FilterTreeNullItem.h"
 
-FilterTreeItemDelegate::FilterTreeItemDelegate(QObject * parent) : QStyledItemDelegate(parent)
-{
-}
+FilterTreeItemDelegate::FilterTreeItemDelegate(QObject * parent) : QStyledItemDelegate(parent) {}
 
 void FilterTreeItemDelegate::paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const
 {
@@ -47,9 +46,12 @@ void FilterTreeItemDelegate::paint(QPainter * painter, const QStyleOptionViewIte
   const QStandardItem * item = model->itemFromIndex(index);
   Q_ASSERT_X(item, "FiltersTreeItemDelegate::paint()", "No item");
   auto filter = dynamic_cast<const FilterTreeItem *>(item);
+  auto nullItem = dynamic_cast<const FilterTreeNullItem *>(item);
 
   QTextDocument doc;
-  if (!item->isCheckable() && filter && !filter->isVisible()) {
+  if (nullItem) {
+    doc.setHtml("<span style=\"font-style: italic;\">(Empty folder)</span>");
+  } else if (!item->isCheckable() && filter && !filter->isVisible()) {
     QColor textColor;
     textColor = DialogSettings::UnselectedFilterTextColor;
     doc.setHtml(QString("<span style=\"color:%1\">%2</span>").arg(textColor.name()).arg(options.text));

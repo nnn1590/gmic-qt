@@ -1,6 +1,6 @@
 /** -*- mode: c++ ; c-basic-offset: 2 -*-
  *
- *  @file Utils.h
+ *  @file FilterTreeNullItem.cpp
  *
  *  Copyright 2017 Sebastien Fourey
  *
@@ -22,23 +22,18 @@
  *  along with gmic_qt.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef GMIC_QT_UTILS_H
-#define GMIC_QT_UTILS_H
 
-#include "gmic_qt.h"
-class QString;
-class QStringList;
+#include "FilterTreeNullItem.h"
 
-namespace GmicQt
+FilterTreeNullItem::FilterTreeNullItem() : FilterTreeAbstractItem(QString())
 {
-const QString & path_rc(bool create);
-unsigned int host_app_pid();
-const QString & pluginFullName();
-const QString & pluginCodeName();
-const char * commandFromOutputMessageMode(OutputMessageMode mode);
-void downcaseCommandTitle(QString & title);
-void appendWithSpace(QString & str, const QString & other);
-void makeUniqueName(QString & name, const QStringList & avoidList);
-} // namespace GmicQt
+  setEditable(false);
+  setFlags(flags().setFlag(Qt::ItemIsSelectable, false));
+}
 
-#endif // GMIC_QT_UTILS_H
+bool FilterTreeNullItem::operator<(const QStandardItem &) const
+{
+  return true;
+}
+
+FilterTreeNullItem::~FilterTreeNullItem() {}

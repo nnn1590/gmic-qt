@@ -25,6 +25,7 @@
 #include "FilterSelector/FavesModel.h"
 #include <QCryptographicHash>
 #include <QDebug>
+#include <QSet>
 #include <QString>
 #include <limits>
 #include "Common.h"
@@ -33,10 +34,6 @@
 #include "gmic_qt.h"
 
 const size_t FavesModel::NoIndex = std::numeric_limits<size_t>::max();
-
-FavesModel::FavesModel() = default;
-
-FavesModel::~FavesModel() = default;
 
 void FavesModel::clear()
 {
@@ -68,7 +65,7 @@ void FavesModel::flush() const
 
 size_t FavesModel::faveCount() const
 {
-  return _faves.size();
+  return static_cast<size_t>(_faves.size());
 }
 
 FavesModel::const_iterator FavesModel::findFaveFromHash(const QString & hash) const
@@ -82,7 +79,7 @@ const FavesModel::Fave & FavesModel::getFaveFromHash(const QString & hash) const
   return _faves.find(hash).value();
 }
 
-QString FavesModel::uniqueName(const QString & name, const QString & faveHashToIgnore)
+QString FavesModel::uniqueName(const QString & name, const QList<QString> & path, const QString & faveHashToIgnore)
 {
   QString basename(name);
   basename.replace(QRegExp(R"~( *\(\d+\)$)~"), QString());
@@ -90,7 +87,7 @@ QString FavesModel::uniqueName(const QString & name, const QString & faveHashToI
   bool nameIsUnique = true;
   QMap<QString, Fave>::const_iterator it = _faves.cbegin();
   while (it != _faves.cend()) {
-    if (it.key() != faveHashToIgnore) {
+    if ((it.key() != faveHashToIgnore) && (path == it.value().path())) {
       QString faveName = it.value().name();
       if (faveName == name) {
         nameIsUnique = false;
@@ -111,6 +108,20 @@ QString FavesModel::uniqueName(const QString & name, const QString & faveHashToI
     return name;
   }
   return QString("%1 (%2)").arg(basename).arg(iMax + 1);
+}
+
+QList<QString> FavesModel::paths() const
+{
+  QSet<QString> paths;
+  for (const Fave & fave : *this) {
+    paths.insert(fave.path().join(FAVE_PATH_SEPATATOR));
+  }
+  paths.remove("");
+  QList<QString> result;
+  for (const QString & str : paths) {
+    result.push_back(str);
+  }
+  return result;
 }
 
 FavesModel::Fave & FavesModel::Fave::setName(const QString & name)
@@ -150,6 +161,12 @@ FavesModel::Fave & FavesModel::Fave::setDefaultValues(const QList<QString> & def
   return *this;
 }
 
+FavesModel::Fave & FavesModel::Fave::setPath(const QList<QString> & path)
+{
+  _path = path;
+  return *this;
+}
+
 FavesModel::Fave & FavesModel::Fave::setDefaultVisibilities(const QList<int> & defaultVisibilities)
 {
   _defaultVisibilityStates = defaultVisibilities;
@@ -160,6 +177,9 @@ FavesModel::Fave & FavesModel::Fave::build()
 {
   QCryptographicHash hash(QCryptographicHash::Md5);
   hash.addData("FAVE/");
+  for (const QString & str : _path) {
+    hash.addData(str.toLocal8Bit());
+  }
   hash.addData(_name.toLocal8Bit());
   hash.addData(_command.toLocal8Bit());
   hash.addData(_previewCommand.toLocal8Bit());
@@ -212,6 +232,11 @@ const QString & FavesModel::Fave::hash() const
 const QList<QString> & FavesModel::Fave::defaultValues() const
 {
   return _defaultValues;
+}
+
+const QList<QString> & FavesModel::Fave::path() const
+{
+  return _path;
 }
 
 const QList<int> & FavesModel::Fave::defaultVisibilityStates() const

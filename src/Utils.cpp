@@ -28,6 +28,7 @@
 #include <QFileInfo>
 #include <QRegExp>
 #include <QString>
+#include <QStringList>
 #include "Common.h"
 #include "Host/host.h"
 #include "gmic.h"
@@ -178,6 +179,30 @@ void appendWithSpace(QString & str, const QString & other)
   }
   str += QChar(' ');
   str += other;
+}
+
+void makeUniqueName(QString & name, const QStringList & avoidList)
+{
+  QString basename(name);
+  basename.replace(QRegExp(R"~( *\(\d+\)$)~"), QString());
+  int iMax = -1;
+  bool nameIsUnique = true;
+  for (QString avoid : avoidList) {
+    QRegExp re(R"~( *\((\d+)\)$)~");
+    if (re.indexIn(avoid) != -1) {
+      avoid.replace(re, QString());
+      if (avoid == basename) {
+        iMax = std::max(iMax, re.cap(1).toInt());
+        nameIsUnique = false;
+      }
+    } else if ((basename == avoid) && (iMax == -1)) {
+      iMax = 1;
+      nameIsUnique = false;
+    }
+  }
+  if (!nameIsUnique && (iMax != -1)) {
+    name = QString("%1 (%2)").arg(basename).arg(iMax + 1);
+  }
 }
 
 } // namespace GmicQt
