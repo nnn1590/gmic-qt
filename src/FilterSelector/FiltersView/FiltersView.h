@@ -43,6 +43,7 @@ class FilterTreeItem;
 class FilterTreeAbstractItem;
 class QSettings;
 class QEvent;
+class FilterTreeItemDelegate;
 
 class FiltersView : public QWidget {
   Q_OBJECT
@@ -64,6 +65,7 @@ public:
   void updateFaveItem(const QString & currentHash, const QString & newHash, const QString & newName);
   void setHeader(const QString & header);
   FilterTreeItem * selectedItem() const;
+  FilterTreeFolder * selectedFolder() const;
   QString selectedFilterHash() const;
   bool aFaveIsSelected() const;
 
@@ -88,6 +90,7 @@ signals:
   void faveRemovalRequested(QString hash);
   void faveAdditionRequested(QString hash);
   void faveSubfolderCreationRequested(QString path);
+  void faveSubfolderRenamed(QString path, QString newName);
 
 public slots:
   void editSelectedFaveName();
@@ -97,7 +100,7 @@ public slots:
   void onCustomContextMenu(const QPoint & point);
 
 private slots:
-  void onRenameFaveFinished(QWidget * editor);
+  void onRenameFinished(QWidget * editor);
   void onReturnKeyPressedInFiltersTree();
   void onItemClicked(QModelIndex index);
   void onItemChanged(QStandardItem * item);
@@ -105,6 +108,7 @@ private slots:
   void onContextMenuRenameFave();
   void onContextMenuAddFave();
   void onContextMenuCreateFaveSubfolder();
+  void onContextMenuRenameFaveSubfolder();
 
 private:
   QStandardItem * filterTreeStandardItemFromIndex(QModelIndex index) const;
@@ -137,7 +141,9 @@ private:
   QMenu * _faveContextMenu;
   QMenu * _faveSubFolderContextMenu;
   QAction * _createFaveSubFolderAction;
+  QAction * _renameFaveSubFolderAction;
   QMenu * _filterContextMenu;
+  FilterTreeItemDelegate * _itemEditionDelegate;
 };
 
 #endif // GMIC_QT_FILTERSVIEW_H

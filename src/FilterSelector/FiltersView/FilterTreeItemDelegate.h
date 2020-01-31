@@ -25,15 +25,23 @@
 #ifndef GMIC_QT_FILTERTREEITEMDELEGATE_H
 #define GMIC_QT_FILTERTREEITEMDELEGATE_H
 
+#include <QScopedPointer>
+#include <QString>
 #include <QStyledItemDelegate>
+class QWidget;
 
 class FilterTreeItemDelegate : public QStyledItemDelegate {
 public:
   FilterTreeItemDelegate(QObject * parent);
+  QWidget * createEditor(QWidget * parent, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
+  const QString & textBeforeEditing() const;
 
 protected:
-  void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const;
-  QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const;
+  void paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const override;
+  QSize sizeHint(const QStyleOptionViewItem & option, const QModelIndex & index) const override;
+
+private:
+  QScopedPointer<QString> _textBeforeEditing;
 };
 
 #endif // GMIC_QT_FILTERTREEITEMDELEGATE_H

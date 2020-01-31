@@ -52,12 +52,12 @@ FiltersView::FiltersView(QWidget * parent) : QWidget(parent), ui(new Ui::Filters
   ui->treeView->setModel(&_emptyModel);
   _faveFolder = nullptr;
   _cachedFolder = _model.invisibleRootItem();
-  auto delegate = new FilterTreeItemDelegate(ui->treeView);
-  ui->treeView->setItemDelegate(delegate);
+  _itemEditionDelegate = new FilterTreeItemDelegate(ui->treeView);
+  ui->treeView->setItemDelegate(_itemEditionDelegate);
   ui->treeView->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
   ui->treeView->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 
-  connect(delegate, SIGNAL(commitData(QWidget *)), this, SLOT(onRenameFaveFinished(QWidget *)));
+  connect(_itemEditionDelegate, SIGNAL(commitData(QWidget *)), this, SLOT(onRenameFinished(QWidget *)));
   connect(ui->treeView, SIGNAL(returnKeyPressed()), this, SLOT(onReturnKeyPressedInFiltersTree()));
   connect(ui->treeView, SIGNAL(clicked(QModelIndex)), this, SLOT(onItemClicked(QModelIndex)));
   connect(&_model, SIGNAL(itemChanged(QStandardItem *)), this, SLOT(onItemChanged(QStandardItem *)));
@@ -77,6 +77,8 @@ FiltersView::FiltersView(QWidget * parent) : QWidget(parent), ui(new Ui::Filters
   _faveSubFolderContextMenu = new QMenu(this);
   _createFaveSubFolderAction = _faveSubFolderContextMenu->addAction(tr("Create subfolder"));
   connect(_createFaveSubFolderAction, SIGNAL(triggered(bool)), this, SLOT(onContextMenuCreateFaveSubfolder()));
+  _renameFaveSubFolderAction = _faveSubFolderContextMenu->addAction(tr("Rename folder"));
+  connect(_renameFaveSubFolderAction, SIGNAL(triggered(bool)), this, SLOT(onContextMenuRenameFaveSubfolder()));
 
   _filterContextMenu = new QMenu(this);
   action = _filterContextMenu->addAction(tr("Add fave"));
@@ -132,6 +134,7 @@ FilterTreeFolder * FiltersView::createFaveSubfolder(const QList<QString> & path)
   }
   QStandardItem * item = createFolder(_faveFolder, path);
   auto folder = dynamic_cast<FilterTreeFolder *>(item);
+  folder->setEditable(true);
   if (folder) {
     updateNullItemInFaveSubfolder(folder);
     sortFaves();
@@ -277,6 +280,12 @@ FilterTreeItem * FiltersView::selectedItem() const
 {
   QModelIndex index = ui->treeView->currentIndex();
   return filterTreeItemFromIndex(index);
+}
+
+FilterTreeFolder * FiltersView::selectedFolder() const
+{
+  QModelIndex index = ui->treeView->currentIndex();
+  return filterTreeFolderFromIndex(index);
 }
 
 QStandardItem * FiltersView::filterTreeStandardItemFromIndex(QModelIndex index) const
@@ -469,23 +478,36 @@ void FiltersView::onCustomContextMenu(const QPoint & point)
   if (folder) {
     if (folder->isFaveFolder()) {
       _createFaveSubFolderAction->setData(_faveFolder->index());
+      _renameFaveSubFolderAction->setData(_faveFolder->index());
       _faveSubFolderContextMenu->exec(ui->treeView->mapToGlobal(point));
     } else if (folder->isFaveSubFolder()) {
       _createFaveSubFolderAction->setData(folder->index());
+      _renameFaveSubFolderAction->setData(folder->index());
       _faveSubFolderContextMenu->exec(ui->treeView->mapToGlobal(point));
     }
   }
 }
 
-void FiltersView::onRenameFaveFinished(QWidget * editor)
+void FiltersView::onRenameFinished(QWidget * editor)
 {
   auto lineEdit = dynamic_cast<QLineEdit *>(editor);
   Q_ASSERT_X(lineEdit, "Rename Fave", "Editor is not a QLineEdit!");
   FilterTreeItem * item = selectedItem();
-  if (!item) {
+  if (item) {
+    emit faveRenamed(item->hash(), lineEdit->text());
     return;
   }
-  emit faveRenamed(item->hash(), lineEdit->text());
+  FilterTreeFolder * folder = selectedFolder();
+  if (folder) {
+    QStringList path = folder->path();
+    path.pop_front();
+    QString newName = path.back();
+    path.pop_back();
+    path.push_back(_itemEditionDelegate->textBeforeEditing());
+    QString pathStr = path.join(FAVE_PATH_SEPATATOR);
+    emit faveSubfolderRenamed(pathStr, newName);
+    return;
+  }
 }
 
 void FiltersView::onReturnKeyPressedInFiltersTree()
@@ -580,6 +602,17 @@ void FiltersView::onContextMenuCreateFaveSubfolder()
   TSHOW(path);
   if (!path.isEmpty()) {
     emit faveSubfolderCreationRequested(path.join(FAVE_PATH_SEPATATOR));
+  }
+}
+
+void FiltersView::onContextMenuRenameFaveSubfolder()
+{
+  QModelIndex index = _renameFaveSubFolderAction->data().toModelIndex();
+  QStandardItem * item = filterTreeStandardItemFromIndex(index);
+  FilterTreeFolder * folder = item ? dynamic_cast<FilterTreeFolder *>(item) : nullptr;
+  TSHOW(folder);
+  if (folder) {
+    ui->treeView->edit(index);
   }
 }
 

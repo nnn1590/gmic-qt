@@ -27,13 +27,36 @@
 #include <QDebug>
 #include <QPainter>
 #include <QPalette>
+#include <QStandardItem>
 #include <QTextDocument>
 #include "DialogSettings.h"
 #include "FilterSelector/FiltersView/FilterTreeAbstractItem.h"
+#include "FilterSelector/FiltersView/FilterTreeFolder.h"
 #include "FilterSelector/FiltersView/FilterTreeItem.h"
 #include "FilterSelector/FiltersView/FilterTreeNullItem.h"
 
-FilterTreeItemDelegate::FilterTreeItemDelegate(QObject * parent) : QStyledItemDelegate(parent) {}
+FilterTreeItemDelegate::FilterTreeItemDelegate(QObject * parent) //
+    : QStyledItemDelegate(parent), _textBeforeEditing(new QString)
+{
+}
+
+QWidget * FilterTreeItemDelegate::createEditor(QWidget * parent, const QStyleOptionViewItem & option, const QModelIndex & index) const
+{
+  auto model = dynamic_cast<const QStandardItemModel *>(index.model());
+  Q_ASSERT_X(model, "FiltersTreeItemDelegate::paint()", "No model");
+  const QStandardItem * item = model->itemFromIndex(index);
+  Q_ASSERT_X(item, "FiltersTreeItemDelegate::paint()", "No item");
+  auto folder = dynamic_cast<const FilterTreeFolder *>(item);
+  if (folder) {
+    *_textBeforeEditing = folder->text();
+  }
+  return QStyledItemDelegate::createEditor(parent, option, index);
+}
+
+const QString & FilterTreeItemDelegate::textBeforeEditing() const
+{
+  return *_textBeforeEditing;
+}
 
 void FilterTreeItemDelegate::paint(QPainter * painter, const QStyleOptionViewItem & option, const QModelIndex & index) const
 {

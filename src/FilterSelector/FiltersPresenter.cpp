@@ -56,6 +56,7 @@ void FiltersPresenter::setFiltersView(FiltersView * filtersView)
   _filtersView = filtersView;
   connect(_filtersView, SIGNAL(filterSelected(QString)), this, SLOT(onFilterChanged(QString)));
   connect(_filtersView, SIGNAL(faveRenamed(QString, QString)), this, SLOT(onFaveRenamed(QString, QString)));
+  connect(_filtersView, SIGNAL(faveSubfolderRenamed(QString, QString)), this, SLOT(onFaveSubfolderRenamed(QString, QString)));
   connect(_filtersView, SIGNAL(faveRemovalRequested(QString)), this, SLOT(removeFave(QString)));
   connect(_filtersView, SIGNAL(faveAdditionRequested(QString)), this, SIGNAL(faveAdditionRequested(QString)));
   connect(_filtersView, SIGNAL(faveSubfolderCreationRequested(QString)), this, SLOT(onFaveSubfolderCreationRequest(QString)));
@@ -377,6 +378,13 @@ void FiltersPresenter::onFaveRenamed(const QString & hash, const QString & name)
   _filtersView->updateFaveItem(hash, fave.hash(), fave.name());
   _filtersView->sortFaves();
   saveFaves();
+}
+
+void FiltersPresenter::onFaveSubfolderRenamed(QString path, QString newName)
+{
+  // TODO : NOW Complete this
+  SHOW(path);
+  SHOW(newName);
 }
 
 void FiltersPresenter::toggleSelectionMode(bool on)

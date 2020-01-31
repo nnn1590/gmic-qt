@@ -80,7 +80,7 @@ public:
   void importGmicGTKFaves();
   void saveFaves();
   void addSelectedFilterAsNewFave(const QList<QString> & defaultValues, const QList<int> & visibilityStates, GmicQt::InputOutputState inOutState);
-  bool selectFaveFolder(QString &path); // TODO : Remove/Move
+  bool selectFaveFolder(QString & path); // TODO : Remove/Move
 
   void applySearchCriterion(const QString & text);
   void selectFilterFromHash(QString hash, bool notify);
@@ -109,6 +109,8 @@ public slots:
   void removeSelectedFave();
   void editSelectedFaveName();
   void onFaveRenamed(const QString & hash, const QString & name);
+  void onFaveSubfolderRenamed(QString path, QString newName);
+
   void toggleSelectionMode(bool on);
   void onFaveSubfolderCreationRequest(QString path);
 
