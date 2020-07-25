@@ -46,7 +46,7 @@
 
 ### Build instructions
 
-By default, the gimp integration plugin is built.
+By default, the standalone application is built.
 
 #### QMake
 
