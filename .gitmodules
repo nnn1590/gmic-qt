@@ -1,0 +1,9 @@
+[submodule "external/android/libpng-android"]
+	path = external/android/libpng-android
+	url = https://github.com/julienr/libpng-android.git
+[submodule "external/android/curl-android-ios"]
+	path = external/android/curl-android-ios
+	url = https://github.com/gcesarmza/curl-android-ios.git
+[submodule "external/android/fftw-3.3.8/jni"]
+	path = external/android/fftw-3.3.8/jni
+	url = https://github.com/aniline/fftw-android-jni.git

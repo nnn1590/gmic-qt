@@ -4,7 +4,47 @@
 #
 #
 
-!defined(HOST,var) { HOST = gimp }
+
+!defined(HOST,var) { HOST = none }
+
+android {
+  isEmpty(QT_TARGET_ARCH) {
+    GMIC_QT_ANDROID_ARCH_A = $${QT_ARCH}
+  } else {
+    GMIC_QT_ANDROID_ARCH_A = $${QT_TARGET_ARCH}
+  }
+  # Probably no need to judge other than i386/x86_64/arm/arm64.
+  equals(GMIC_QT_ANDROID_ARCH_A, "i386"        ) { GMIC_QT_ANDROID_ARCH_B = "x86"         }
+  equals(GMIC_QT_ANDROID_ARCH_A, "x86"         ) { GMIC_QT_ANDROID_ARCH_B = "x86"         }
+  equals(GMIC_QT_ANDROID_ARCH_A, "amd64"       ) { GMIC_QT_ANDROID_ARCH_B = "x86_64"      }
+  equals(GMIC_QT_ANDROID_ARCH_A, "x86_64"      ) { GMIC_QT_ANDROID_ARCH_B = "x86_64"      }
+  equals(GMIC_QT_ANDROID_ARCH_A, "armeabi-v7a" ) { GMIC_QT_ANDROID_ARCH_B = "armeabi-v7a" }
+  equals(GMIC_QT_ANDROID_ARCH_A, "arm"         ) { GMIC_QT_ANDROID_ARCH_B = "armeabi-v7a" }
+  equals(GMIC_QT_ANDROID_ARCH_A, "arm64-v8a"   ) { GMIC_QT_ANDROID_ARCH_B = "arm64-v8a"   }
+  equals(GMIC_QT_ANDROID_ARCH_A, "aarch64"     ) { GMIC_QT_ANDROID_ARCH_B = "arm64-v8a"   }
+  equals(GMIC_QT_ANDROID_ARCH_A, "arm64"       ) { GMIC_QT_ANDROID_ARCH_B = "arm64-v8a"   }
+
+  #LIBS += -L$$PWD/external/android/fftw3-android/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/ -lfftw3
+  #INCLUDEPATH += $$PWD/external/android/fftw3-android/include
+  #DEPENDPATH += $$PWD/external/android/fftw3-android/include
+  #PRE_TARGETDEPS += $$PWD/external/android/fftw3-android/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/libfftw3.a
+
+  LIBS += -L$$PWD/external/android/fftw-3.3.8/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/ -lfftw3 -lfftw_threads
+  INCLUDEPATH += $$PWD/external/android/fftw-3.3.8/api
+  DEPENDPATH += $$PWD/external/android/fftw-3.3.8/api
+  ANDROID_EXTRA_LIBS += $$PWD/external/android/fftw-3.3.8/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/libfftw3.so
+  PRE_TARGETDEPS += $$PWD/external/android/fftw-3.3.8/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/libfftw_threads.a
+
+  LIBS += -L$$PWD/external/android/libpng-android/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/ -lpng
+  INCLUDEPATH += $$PWD/external/android/libpng-android/jni
+  DEPENDPATH += $$PWD/external/android/libpng-android/jni
+  PRE_TARGETDEPS += $$PWD/external/android/libpng-android/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/libpng.a
+
+  LIBS += -L$$PWD/external/android/curl-android-ios/curl-compile-scripts/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/ -lcurl
+  INCLUDEPATH += $$PWD/external/android/curl-android-ios/curl/include
+  DEPENDPATH += $$PWD/external/android/curl-android-ios/curl/include
+  PRE_TARGETDEPS += $$PWD/external/android/curl-android-ios/curl-compile-scripts/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/libcurl.a
+}
 
 !defined(GMIC_DYNAMIC_LINKING,var) { GMIC_DYNAMIC_LINKING = off }
 
@@ -51,7 +91,7 @@ QT_CONFIG -= no-pkg-config
 CONFIG += link_pkgconfig
 VERSION = 0.0.0
 
-PKGCONFIG += fftw3 zlib libpng libcurl
+!android: PKGCONFIG += fftw3 zlib libpng libcurl
 
 equals( HOST, "gimp" ) {
   PKGCONFIG += gimp-2.0
@@ -134,7 +174,7 @@ message("CImg version is" $$CIMG_VERSION)
   DEFINES += gmic_prerelease="\\\"$$PRERELEASE\\\""
 }
 
-!win32 {
+!win32:!android {
  LIBS += -lfftw3_threads
  DEFINES += cimg_display=1
 }
@@ -145,10 +185,14 @@ win32 {
  DEFINES += cimg_display=2
 }
 
-linux {
+linux:!android {
   DEFINES += _IS_LINUX_
   PKGCONFIG += x11
   message( Linux platform )
+}
+
+android {
+ DEFINES += cimg_display=0
 }
 
 equals( HOST, "gimp") {
