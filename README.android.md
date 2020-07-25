@@ -68,6 +68,6 @@ cd external/android/libpng-android
 3. Press OK
 
 ## Known issues
-- Most filters crash
+- Most filters crash(building with arm64-v8a is more likely to crash than building with armeabi-v7a)
 - GUI doesn't fit on small display
 - Does not work except `HOST=none` (so you can't run from Krita for Android. Probably should be native binary instead of APK.)

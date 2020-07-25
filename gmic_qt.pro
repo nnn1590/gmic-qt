@@ -24,26 +24,29 @@ android {
   equals(GMIC_QT_ANDROID_ARCH_A, "aarch64"     ) { GMIC_QT_ANDROID_ARCH_B = "arm64-v8a"   }
   equals(GMIC_QT_ANDROID_ARCH_A, "arm64"       ) { GMIC_QT_ANDROID_ARCH_B = "arm64-v8a"   }
 
-  #LIBS += -L$$PWD/external/android/fftw3-android/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/ -lfftw3
-  #INCLUDEPATH += $$PWD/external/android/fftw3-android/include
-  #DEPENDPATH += $$PWD/external/android/fftw3-android/include
-  #PRE_TARGETDEPS += $$PWD/external/android/fftw3-android/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/libfftw3.a
+  GMIC_QT_ANDROID_LIBS_BASE_PATH="$$PWD/external/android"
+  #GMIC_QT_ANDROID_LIBS_BASE_PATH="$$PWD/.."
 
-  LIBS += -L$$PWD/external/android/fftw-3.3.8/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/ -lfftw3 -lfftw_threads
-  INCLUDEPATH += $$PWD/external/android/fftw-3.3.8/api
-  DEPENDPATH += $$PWD/external/android/fftw-3.3.8/api
-  ANDROID_EXTRA_LIBS += $$PWD/external/android/fftw-3.3.8/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/libfftw3.so
-  PRE_TARGETDEPS += $$PWD/external/android/fftw-3.3.8/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/libfftw_threads.a
+  #LIBS += -L$${GMIC_QT_ANDROID_LIBS_BASE_PATH}/fftw3-android/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/ -lfftw3
+  #INCLUDEPATH += $${GMIC_QT_ANDROID_LIBS_BASE_PATH}/fftw3-android/include
+  #DEPENDPATH += $${GMIC_QT_ANDROID_LIBS_BASE_PATH}/fftw3-android/include
+  #PRE_TARGETDEPS += $${GMIC_QT_ANDROID_LIBS_BASE_PATH}/fftw3-android/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/libfftw3.a
 
-  LIBS += -L$$PWD/external/android/libpng-android/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/ -lpng
-  INCLUDEPATH += $$PWD/external/android/libpng-android/jni
-  DEPENDPATH += $$PWD/external/android/libpng-android/jni
-  PRE_TARGETDEPS += $$PWD/external/android/libpng-android/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/libpng.a
+  LIBS += -L$${GMIC_QT_ANDROID_LIBS_BASE_PATH}/fftw-3.3.8/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/ -lfftw3 -lfftw_threads
+  INCLUDEPATH += $${GMIC_QT_ANDROID_LIBS_BASE_PATH}/fftw-3.3.8/api
+  DEPENDPATH += $${GMIC_QT_ANDROID_LIBS_BASE_PATH}/fftw-3.3.8/api
+  ANDROID_EXTRA_LIBS += $${GMIC_QT_ANDROID_LIBS_BASE_PATH}/fftw-3.3.8/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/libfftw3.so
+  PRE_TARGETDEPS += $${GMIC_QT_ANDROID_LIBS_BASE_PATH}/fftw-3.3.8/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/libfftw_threads.a
 
-  LIBS += -L$$PWD/external/android/curl-android-ios/curl-compile-scripts/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/ -lcurl
-  INCLUDEPATH += $$PWD/external/android/curl-android-ios/curl/include
-  DEPENDPATH += $$PWD/external/android/curl-android-ios/curl/include
-  PRE_TARGETDEPS += $$PWD/external/android/curl-android-ios/curl-compile-scripts/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/libcurl.a
+  LIBS += -L$${GMIC_QT_ANDROID_LIBS_BASE_PATH}/libpng-android/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/ -lpng
+  INCLUDEPATH += $${GMIC_QT_ANDROID_LIBS_BASE_PATH}/libpng-android/jni
+  DEPENDPATH += $${GMIC_QT_ANDROID_LIBS_BASE_PATH}/libpng-android/jni
+  PRE_TARGETDEPS += $${GMIC_QT_ANDROID_LIBS_BASE_PATH}/libpng-android/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/libpng.a
+
+  LIBS += -L$${GMIC_QT_ANDROID_LIBS_BASE_PATH}/curl-android-ios/curl-compile-scripts/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/ -lcurl
+  INCLUDEPATH += $${GMIC_QT_ANDROID_LIBS_BASE_PATH}/curl-android-ios/curl/include
+  DEPENDPATH += $${GMIC_QT_ANDROID_LIBS_BASE_PATH}/curl-android-ios/curl/include
+  PRE_TARGETDEPS += $${GMIC_QT_ANDROID_LIBS_BASE_PATH}/curl-android-ios/curl-compile-scripts/obj/local/$${GMIC_QT_ANDROID_ARCH_B}/libcurl.a
 }
 
 !defined(GMIC_DYNAMIC_LINKING,var) { GMIC_DYNAMIC_LINKING = off }
