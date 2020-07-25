@@ -1,4 +1,5 @@
 # G'MIC for Android
+I'm sorry if my English is wrong.
 
 ## Building
 NOTE: May be incomplete
@@ -15,7 +16,7 @@ Tested on Ubuntu GNU/Linux 20.04 amd64 and Google Pixel 4 arm64-v8a
   For your reference: I used the official open source version of Qt5, used offline installer. ([It's recommended to change the installer settings](https://superuser.com/questions/1524977/cant-skip-login-in-qt-installer).)
 
 ### How to build
-1. Setup environment variables: `PATH, ANDROID_HOME, ANDROID_SDK_ROOT, NDK_ROOT`
+1. Setup environment variables: `PATH`, `ANDROID_HOME`, `ANDROID_SDK_ROOT`, `NDK_ROOT`
 2. Clone repository: `git clone https://github.com/nnn1590/gmic-qt.git -b android-port --recursive`
 3. Run `(gmic-qt)/external/android/download.sh`
 4. Build `(gmic-qt)/external/android/*`  (See [#Buiding-external-libraries](#Buiding-external-libraries))
@@ -63,6 +64,7 @@ cd external/android/libpng-android
 1. Open Tools(menu bar) -> Options -> Device -> Android
 2. Fill JDK, SDK, NDK, OpenSSL paths
    NOTE: OpenSSL can use [this](https://github.com/KDAB/android_openssl). Just clone it and set path to it in Qt Creator.
+   NOTE: Probably Android NDK needs a newer version than r17c.
 3. Press OK
 
 ## Known issues
